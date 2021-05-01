@@ -17,15 +17,38 @@
         tools:ignore="MissingConstraints">
 
         <TextView
+            android:id="@+id/originalNumberTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:text="The Original Number:"
+            android:textColor="#000000"
+            android:textSize="20sp" />
+
+        <TextView
             android:id="@+id/originalNumber"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_weight="1"
             android:ellipsize="end"
+            android:paddingBottom="40dp"
             android:text="@string/original_number"
             android:textColor="#000000"
-            android:textSize="24sp" />
+            android:textSize="30sp" />
+
+        <TextView
+            android:id="@+id/calculationTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:text="Calculation:"
+            android:textColor="#000000"
+            android:textSize="20sp" />
 
         <TextView
             android:id="@+id/calculation"
@@ -34,6 +57,7 @@
             android:layout_gravity="center"
             android:layout_weight="0"
             android:ellipsize="end"
+            android:paddingBottom="40dp"
             android:text="@string/calculation_expression"
             android:textColor="#000000"
             android:textSize="24sp" />
