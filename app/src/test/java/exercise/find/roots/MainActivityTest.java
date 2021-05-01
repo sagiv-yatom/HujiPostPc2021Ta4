@@ -1,7 +1,9 @@
 package exercise.find.roots;
 
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 
 import junit.framework.TestCase;
 
@@ -70,4 +72,62 @@ public class MainActivityTest extends TestCase {
   //    create the broadcast intent (example: `new Intent("my_action_here")` ) and put extras
   //    call `RuntimeEnvironment.application.sendBroadcast()` to send the broadcast
   //    call `Shadows.shadowOf(Looper.getMainLooper()).idle();` to let the android OS time to process the broadcast the let your activity consume it
+  @Test
+  public void when_activityIsLaunching_then_theProgressBarStartHidden(){
+    // create a MainActivity and let it think it's currently displayed on the screen
+    MainActivity mainActivity = Robolectric.buildActivity(MainActivity.class).create().visible().get();
+
+    // test: make sure that the "progress" bar is hidden
+    ProgressBar progressBar = mainActivity.findViewById(R.id.progressBar);
+    assertTrue(progressBar.getVisibility() == View.GONE);
+  }
+
+  @Test
+  public void when_userIsEnteringAGoodNumberAndClickingButton_theProgressBarShouldBeDisplayed(){
+    // create a MainActivity and let it think it's currently displayed on the screen
+    MainActivity mainActivity = Robolectric.buildActivity(MainActivity.class).create().visible().get();
+
+    // find the edit-text, the button and the progress bar
+    EditText inputEditText = mainActivity.findViewById(R.id.editTextInputNumber);
+    Button button = mainActivity.findViewById(R.id.buttonCalculateRoots);
+    ProgressBar progressBar = mainActivity.findViewById(R.id.progressBar);
+
+    // test: insert a good input to the edit text, click the button and verify that the progress bar should be displayed
+    inputEditText.setText("187");
+    button.performClick();
+    assertTrue(progressBar.isEnabled());
+  }
+
+  @Test
+  public void when_userIsEnteringABadNumberAndClickingButton_theButtonShouldBeDisabled(){
+    // create a MainActivity and let it think it's currently displayed on the screen
+    MainActivity mainActivity = Robolectric.buildActivity(MainActivity.class).create().visible().get();
+
+    // find the edit-text and the button
+    EditText inputEditText = mainActivity.findViewById(R.id.editTextInputNumber);
+    Button button = mainActivity.findViewById(R.id.buttonCalculateRoots);
+    ProgressBar progressBar = mainActivity.findViewById(R.id.progressBar);
+
+    // test: insert a good input to the edit text, click the button and verify that the progress bar should be displayed
+    inputEditText.setText("18.7");
+    assertFalse(button.isEnabled());
+  }
+
+  @Test
+  public void when_userIsEnteringNumberAndThenDeleteIt_theButtonShouldBeEnabledAndThenDisabled(){
+    // create a MainActivity and let it think it's currently displayed on the screen
+    MainActivity mainActivity = Robolectric.buildActivity(MainActivity.class).create().visible().get();
+
+    // find the edit-text and the button
+    EditText inputEditText = mainActivity.findViewById(R.id.editTextInputNumber);
+    Button button = mainActivity.findViewById(R.id.buttonCalculateRoots);
+    ProgressBar progressBar = mainActivity.findViewById(R.id.progressBar);
+
+    // test: insert a good input to the edit text, click the button and verify that the progress bar should be displayed
+    assertFalse(button.isEnabled());
+    inputEditText.setText("1");
+    assertTrue(button.isEnabled());
+    inputEditText.setText("");
+    assertFalse(button.isEnabled());
+  }
 }
