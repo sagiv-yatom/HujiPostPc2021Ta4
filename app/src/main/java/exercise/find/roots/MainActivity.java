@@ -11,6 +11,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -18,8 +19,16 @@ import androidx.appcompat.app.AppCompatActivity;
 public class MainActivity extends AppCompatActivity {
 
   private BroadcastReceiver broadcastReceiverForSuccess = null;
-  // TODO: add any other fields to the activity as you want
+  private BroadcastReceiver broadcastReceiverForAbort = null;
 
+  public static boolean isLong(String str) {
+    try {
+      Long.parseLong(str);
+      return true;
+    } catch(NumberFormatException e){
+      return false;
+    }
+  }
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -43,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
       public void afterTextChanged(Editable s) {
         // text did change
         String newText = editTextUserInput.getText().toString();
-        // todo: check conditions to decide if button should be enabled/disabled (see spec below)
+        buttonCalculateRoots.setEnabled(isLong(newText));
       }
     });
 
@@ -51,11 +60,19 @@ public class MainActivity extends AppCompatActivity {
     buttonCalculateRoots.setOnClickListener(v -> {
       Intent intentToOpenService = new Intent(MainActivity.this, CalculateRootsService.class);
       String userInputString = editTextUserInput.getText().toString();
-      // todo: check that `userInputString` is a number. handle bad input. convert `userInputString` to long
-      long userInputLong = 0; // todo this should be the converted string from the user
-      intentToOpenService.putExtra("number_for_service", userInputLong);
-      startService(intentToOpenService);
-      // todo: set views states according to the spec (below)
+
+      if (isLong(userInputString)) {
+        buttonCalculateRoots.setEnabled(true);
+        long userInputLong = Long.parseLong(userInputString);
+        intentToOpenService.putExtra("number_for_service", userInputLong);
+        startService(intentToOpenService);
+      } else {
+        buttonCalculateRoots.setEnabled(false);
+      }
+
+      progressBar.setVisibility(View.VISIBLE);
+      editTextUserInput.setEnabled(false);
+      buttonCalculateRoots.setEnabled(false);
     });
 
     // register a broadcast-receiver to handle action "found_roots"
@@ -64,89 +81,98 @@ public class MainActivity extends AppCompatActivity {
       public void onReceive(Context context, Intent incomingIntent) {
         if (incomingIntent == null || !incomingIntent.getAction().equals("found_roots")) return;
         // success finding roots!
-        /*
-         TODO: handle "roots-found" as defined in the spec (below).
-          also:
-           - the service found roots and passed them to you in the `incomingIntent`. extract them.
-           - when creating an intent to open the new-activity, pass the roots as extras to the new-activity intent
-             (see for example how did we pass an extra when starting the calculation-service)
-         */
+
+        progressBar.setVisibility(View.GONE);
+        editTextUserInput.setEnabled(true);
+        buttonCalculateRoots.setEnabled(true);
+        long number = incomingIntent.getLongExtra("original_number", 0);
+        long root1 = incomingIntent.getLongExtra("root1", 0);
+        long root2 = incomingIntent.getLongExtra("root2", 0);
+        long time = incomingIntent.getLongExtra("time_until_calculating", 0);
+        Intent intentToOpenSuccessActivity = new Intent(MainActivity.this, SuccessActivity.class);
+        intentToOpenSuccessActivity.putExtra("original_number", number);
+        intentToOpenSuccessActivity.putExtra("root1", root1);
+        intentToOpenSuccessActivity.putExtra("root2", root2);
+        intentToOpenSuccessActivity.putExtra("time", time);
+        startActivity(intentToOpenSuccessActivity);
       }
     };
     registerReceiver(broadcastReceiverForSuccess, new IntentFilter("found_roots"));
 
-    /*
-    todo:
-     add a broadcast-receiver to listen for abort-calculating as defined in the spec (below)
-     to show a Toast, use this code:
-     `Toast.makeText(this, "text goes here", Toast.LENGTH_SHORT).show()`
-     */
+    broadcastReceiverForAbort = new BroadcastReceiver() {
+      @Override
+      public void onReceive(Context context, Intent incomingIntent) {
+        if (incomingIntent == null || !incomingIntent.getAction().equals("stopped_calculations")) return;
+
+        progressBar.setVisibility(View.GONE);
+        editTextUserInput.setEnabled(true);
+        buttonCalculateRoots.setEnabled(true);
+        String calcTime = Long.toString(incomingIntent.getLongExtra("time_until_give_up_seconds", 0));
+        Toast.makeText(context, "calculation aborted after " + calcTime + " seconds", Toast.LENGTH_SHORT).show();
+      }
+    };
+    registerReceiver(broadcastReceiverForAbort, new IntentFilter("stopped_calculations"));
   }
 
   @Override
   protected void onDestroy() {
     super.onDestroy();
-    // todo: remove ALL broadcast receivers we registered earlier in onCreate().
-    //  to remove a registered receiver, call method `this.unregisterReceiver(<receiver-to-remove>)`
+    this.unregisterReceiver(broadcastReceiverForSuccess);
+    this.unregisterReceiver(broadcastReceiverForAbort);
   }
 
   @Override
   protected void onSaveInstanceState(@NonNull Bundle outState) {
     super.onSaveInstanceState(outState);
-    // TODO: put relevant data into bundle as you see fit
+
+    ProgressBar progressBar = findViewById(R.id.progressBar);
+    EditText editTextUserInput = findViewById(R.id.editTextInputNumber);
+    Button buttonCalculateRoots = findViewById(R.id.buttonCalculateRoots);
+
+    boolean progressBarVisibility = false;
+    boolean buttonCalculateRootsEnabled = false;
+    boolean editTextEnabled = false;
+
+    String userInputText = editTextUserInput.getText().toString();
+    if (progressBar.getVisibility() == View.VISIBLE) {
+      progressBarVisibility = true;
+    }
+    if (buttonCalculateRoots.isEnabled()) {
+      buttonCalculateRootsEnabled = true;
+    }
+    if (editTextUserInput.isEnabled()) {
+      editTextEnabled = true;
+    }
+
+    outState.putBoolean("progress bar visibility", progressBarVisibility);
+    outState.putBoolean("button enabled", buttonCalculateRootsEnabled);
+    outState.putBoolean("edit text enabled", editTextEnabled);
+    outState.putString("input text", userInputText);
   }
 
   @Override
   protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
     super.onRestoreInstanceState(savedInstanceState);
-    // TODO: load data from bundle and set screen state (see spec below)
+
+    String userInputText = savedInstanceState.getString("input text");
+    boolean progressBarVisibility = savedInstanceState.getBoolean("progress bar visibility");
+    boolean editTextEnabled = savedInstanceState.getBoolean("edit text enabled");
+    boolean buttonCalculateRootsEnabled = savedInstanceState.getBoolean("button enabled");
+
+    ProgressBar progressBar = findViewById(R.id.progressBar);
+    EditText editTextUserInput = findViewById(R.id.editTextInputNumber);
+    Button buttonCalculateRoots = findViewById(R.id.buttonCalculateRoots);
+
+    editTextUserInput.setText(userInputText);
+
+    if (progressBarVisibility) {
+      progressBar.setVisibility(View.VISIBLE);
+    } else {
+      progressBar.setVisibility(View.GONE);
+    }
+
+    editTextUserInput.setEnabled(editTextEnabled);
+
+    buttonCalculateRoots.setEnabled(buttonCalculateRootsEnabled);
   }
 }
-
-
-/*
-
-TODO:
-the spec is:
-
-upon launch, Activity starts out "clean":
-* progress-bar is hidden
-* "input" edit-text has no input and it is enabled
-* "calculate roots" button is disabled
-
-the button behavior is:
-* when there is no valid-number as an input in the edit-text, button is disabled
-* when we triggered a calculation and still didn't get any result, button is disabled
-* otherwise (valid number && not calculating anything in the BG), button is enabled
-
-the edit-text behavior is:
-* when there is a calculation in the BG, edit-text is disabled (user can't input anything)
-* otherwise (not calculating anything in the BG), edit-text is enabled (user can tap to open the keyboard and add input)
-
-the progress behavior is:
-* when there is a calculation in the BG, progress is showing
-* otherwise (not calculating anything in the BG), progress is hidden
-
-when "calculate roots" button is clicked:
-* change states for the progress, edit-text and button as needed, so user can't interact with the screen
-
-when calculation is complete successfully:
-* change states for the progress, edit-text and button as needed, so the screen can accept new input
-* open a new "success" screen showing the following data:
-  - the original input number
-  - 2 roots combining this number (e.g. if the input was 99 then you can show "99=9*11" or "99=3*33"
-  - calculation time in seconds
-
-when calculation is aborted as it took too much time:
-* change states for the progress, edit-text and button as needed, so the screen can accept new input
-* show a toast "calculation aborted after X seconds"
-
-
-upon screen rotation (saveState && loadState) the new screen should show exactly the same state as the old screen. this means:
-* edit-text shows the same input
-* edit-text is disabled/enabled based on current "is waiting for calculation?" state
-* progress is showing/hidden based on current "is waiting for calculation?" state
-* button is enabled/disabled based on current "is waiting for calculation?" state && there is a valid number in the edit-text input
-
-
- */
