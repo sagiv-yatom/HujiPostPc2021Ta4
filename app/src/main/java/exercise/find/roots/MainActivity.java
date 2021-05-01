@@ -88,7 +88,7 @@ public class MainActivity extends AppCompatActivity {
         long number = incomingIntent.getLongExtra("original_number", 0);
         long root1 = incomingIntent.getLongExtra("root1", 0);
         long root2 = incomingIntent.getLongExtra("root2", 0);
-        long time = incomingIntent.getLongExtra("time_until_calculating", 0);
+        double time = incomingIntent.getDoubleExtra("time_until_calculating", 0);
         Intent intentToOpenSuccessActivity = new Intent(MainActivity.this, SuccessActivity.class);
         intentToOpenSuccessActivity.putExtra("original_number", number);
         intentToOpenSuccessActivity.putExtra("root1", root1);

@@ -39,7 +39,7 @@ public class CalculateRootsService extends IntentService {
       newIntent.putExtra("original_number", numberToCalculateRootsFor);
       newIntent.putExtra("root1", i);
       newIntent.putExtra("root2", numberToCalculateRootsFor / i);
-      newIntent.putExtra("time_until_calculating", System.currentTimeMillis() - timeStartMs);
+      newIntent.putExtra("time_until_calculating", (System.currentTimeMillis() - timeStartMs)/1000.0);
     }
     else {
       newIntent.setAction("stopped_calculations");

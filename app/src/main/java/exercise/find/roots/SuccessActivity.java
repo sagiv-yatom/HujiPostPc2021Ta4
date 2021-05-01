@@ -21,7 +21,7 @@ public class SuccessActivity extends AppCompatActivity {
         String number = Long.toString(intent.getLongExtra("original_number", 0));
         String root1 = Long.toString(intent.getLongExtra("root1", 0));
         String root2 = Long.toString(intent.getLongExtra("root2", 0));
-        String time = Long.toString(intent.getLongExtra("time", 0));
+        String time = Double.toString(intent.getDoubleExtra("time", 0));
 
         originalNumber.setText(number);
         calculation.setText(number + " = " + root1 + " * " + root2);
